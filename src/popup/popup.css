@@ -1,0 +1,20 @@
+:root {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.pg-popup {
+  width: 260px;
+  padding: 16px;
+  text-align: center;
+}
+
+.pg-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.pg-status {
+  margin: 0;
+  font-size: 13px;
+  color: #16a34a;
+}

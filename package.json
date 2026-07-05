@@ -1,0 +1,37 @@
+{
+  "name": "phishguard",
+  "version": "0.0.1",
+  "description": "A browser extension that detects and warns about phishing websites in real time using URL heuristics and page analysis.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShArafat58/PhishGuard.git"
+  },
+  "keywords": [
+    "cybersecurity",
+    "phishing-detection",
+    "browser-extension",
+    "chrome-extension",
+    "manifest-v3",
+    "typescript",
+    "web-security",
+    "infosec"
+  ],
+  "author": "ShArafat58",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ShArafat58/PhishGuard/issues"
+  },
+  "homepage": "https://github.com/ShArafat58/PhishGuard#readme",
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.7.1",
+    "@types/chrome": "^0.2.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3"
+  }
+}
