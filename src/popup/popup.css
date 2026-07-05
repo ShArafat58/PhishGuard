@@ -18,3 +18,27 @@
   font-size: 13px;
   color: #16a34a;
 }
+
+.pg-current-site {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  text-align: left;
+}
+
+.pg-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.pg-url {
+  display: block;
+  font-size: 12px;
+  word-break: break-all;
+  color: #111827;
+}
