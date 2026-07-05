@@ -1,14 +1,14 @@
 /**
  * PhishGuard — Detection module public API.
  *
- * The rest of the extension imports ONLY from here, so the internal file
- * structure can change freely without breaking anything outside.
+ * The rest of the extension imports ONLY from here.
  */
 
-export { analyzeAndScore } from './scorer'
-export { SCORE_THRESHOLDS } from './scorer'
+export { analyzeAndScore, analyzePage, SCORE_THRESHOLDS } from './scorer'
+export { collectPageFeatures } from './collectPageFeatures'
 export type {
   RiskSignal,
   UrlAnalysisResult,
+  PageFeatures,
 } from './types'
 export { RiskLevel, Severity, SignalId } from './types'

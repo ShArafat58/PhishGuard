@@ -1,21 +1,20 @@
 /**
  * PhishGuard — Risk scorer.
  *
- * Turns the raw list of signals from the engine into a single, meaningful
- * verdict: a total score plus a human-facing RiskLevel. This is what the
- * UI ultimately shows the user.
+ * Turns raw signals (from both URL and DOM analysis) into a single verdict:
+ * a total score plus a human-facing RiskLevel.
  */
 
-import { analyzeUrl } from './engine'
+import { analyzeUrl, analyzeDom } from './engine'
 import {
   type RiskSignal,
   type UrlAnalysisResult,
+  type PageFeatures,
   RiskLevel,
 } from './types'
 
 /**
  * Score thresholds that map a numeric total to a RiskLevel.
- * Kept in one place so they are easy to understand and tune.
  *   - 0            -> SAFE
  *   - 1 .. 39      -> SUSPICIOUS
  *   - 40 and above -> DANGEROUS
@@ -41,20 +40,31 @@ function scoreToLevel(totalScore: number): RiskLevel {
   return RiskLevel.SAFE
 }
 
-/**
- * Analyses a URL end-to-end: runs all rules, sums the scores, and
- * classifies the result. This is the main function the rest of the
- * extension will call.
- */
-export function analyzeAndScore(rawUrl: string): UrlAnalysisResult {
-  const signals = analyzeUrl(rawUrl)
+/** Builds the final result object from a URL and a list of signals. */
+function buildResult(url: string, signals: RiskSignal[]): UrlAnalysisResult {
   const totalScore = sumScores(signals)
-  const level = scoreToLevel(totalScore)
-
   return {
-    url: rawUrl,
+    url,
     totalScore,
-    level,
+    level: scoreToLevel(totalScore),
     signals,
   }
+}
+
+/**
+ * Analyses a URL only (no page features). Kept for URL-only contexts and
+ * for the existing test suite.
+ */
+export function analyzeAndScore(rawUrl: string): UrlAnalysisResult {
+  return buildResult(rawUrl, analyzeUrl(rawUrl))
+}
+
+/**
+ * Full page analysis: combines URL-based and DOM-based signals into one
+ * result. This is the main function the background uses for a live page.
+ */
+export function analyzePage(features: PageFeatures): UrlAnalysisResult {
+  const urlSignals = analyzeUrl(features.pageUrl)
+  const domSignals = analyzeDom(features)
+  return buildResult(features.pageUrl, [...urlSignals, ...domSignals])
 }

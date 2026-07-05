@@ -1,24 +1,36 @@
 /**
- * PhishGuard — Content script
+ * PhishGuard — Content script ("the eyes").
  *
- * Runs inside every web page the user visits. For now it simply notifies
- * the background service worker that it has loaded, and on which URL.
- * In later milestones, this is where we will inspect the page's DOM to
- * look for phishing signals.
+ * Runs inside every web page. It collects a small set of DOM features and
+ * sends them to the background service worker for analysis. It makes no
+ * judgements itself — that is the background's job.
  */
 
-import { MessageType, type ContentScriptLoadedRequest } from '../lib/type'
+import { collectPageFeatures } from '../lib/detection'
+import { MessageType, type PageFeaturesRequest } from '../lib/type'
 
 console.log(`[PhishGuard] Content script loaded on: ${window.location.href}`)
 
-// Notify the background that we have loaded on this page.
-// This is a one-way message: we do not expect a response.
-const message: ContentScriptLoadedRequest = {
-  type: MessageType.CONTENT_SCRIPT_LOADED,
-  url: window.location.href,
+/**
+ * Collects page features and sends them to the background.
+ * Wrapped defensively so a hostile or unusual page cannot break us.
+ */
+function reportPageFeatures(): void {
+  try {
+    const features = collectPageFeatures()
+
+    const message: PageFeaturesRequest = {
+      type: MessageType.PAGE_FEATURES,
+      features,
+    }
+
+    chrome.runtime.sendMessage(message).catch((error) => {
+      // The service worker may be briefly asleep; non-fatal.
+      console.debug('[PhishGuard] Could not send page features:', error)
+    })
+  } catch (error) {
+    console.debug('[PhishGuard] Feature collection failed:', error)
+  }
 }
 
-chrome.runtime.sendMessage(message).catch((error) => {
-  // The service worker may be briefly asleep; a failure here is non-fatal.
-  console.debug('[PhishGuard] Could not notify background:', error)
-})
+reportPageFeatures()

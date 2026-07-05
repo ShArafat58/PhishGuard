@@ -1,17 +1,17 @@
 /**
- * PhishGuard — URL Analysis Engine.
+ * PhishGuard — Detection engine.
  *
- * This is the "conductor" of URL-based detection. It parses a URL once,
- * runs every heuristic rule against it, and collects the signals that
- * fired. Scoring and final risk classification are handled separately
- * (see the scorer, added in the next step).
+ * The "conductor" of detection. It runs URL-based rules against a URL and
+ * DOM-based rules against collected page features, and collects the signals
+ * that fired.
  *
- * Adding a new rule = write the rule file, then register it in one of the
- * two arrays below. Nothing else changes. (Open/Closed principle.)
+ * Adding a new rule = write the rule file, then register it in the right
+ * array below. Nothing else changes. (Open/Closed principle.)
  */
 
-import type { RiskSignal } from './types'
+import type { RiskSignal, PageFeatures } from './types'
 
+// --- URL-based rules (Milestone 3) ---
 import { checkNoHttps } from './rules/noHttps'
 import { checkIpAddressHost } from './rules/ipAddressHost'
 import { checkAtSymbol } from './rules/atSymbol'
@@ -20,9 +20,12 @@ import { checkManySubdomains } from './rules/manySubdomains'
 import { checkSuspiciousTld } from './rules/suspiciousTld'
 import { checkPunycodeHost } from './rules/punycodeHost'
 
-/**
- * Rules that operate on a parsed URL object (protocol, hostname, etc.).
- */
+// --- DOM-based rules (Milestone 4) ---
+import { checkPasswordFieldNoHttps } from './rules/dom/passwordFieldNoHttps'
+import { checkFormActionMismatch } from './rules/dom/formActionMismatch'
+import { checkInsecureFormAction } from './rules/dom/insecureFormAction'
+
+/** URL rules that operate on a parsed URL object. */
 const URL_OBJECT_RULES: Array<(url: URL) => RiskSignal | null> = [
   checkNoHttps,
   checkIpAddressHost,
@@ -31,42 +34,55 @@ const URL_OBJECT_RULES: Array<(url: URL) => RiskSignal | null> = [
   checkPunycodeHost,
 ]
 
-/**
- * Rules that need the raw URL string (e.g. to inspect the "@" trick or
- * total length before parsing normalises things away).
- */
+/** URL rules that need the raw URL string. */
 const RAW_STRING_RULES: Array<(rawUrl: string) => RiskSignal | null> = [
   checkAtSymbol,
   checkExcessiveLength,
 ]
 
+/** DOM rules that operate on collected page features. */
+const DOM_RULES: Array<(features: PageFeatures) => RiskSignal | null> = [
+  checkPasswordFieldNoHttps,
+  checkFormActionMismatch,
+  checkInsecureFormAction,
+]
+
 /**
- * Runs all heuristic rules against a single URL and returns the list of
- * signals that fired. Returns an empty array for a clean URL.
- *
- * If the URL cannot be parsed at all, that itself is treated as a signal.
+ * Runs all URL-based rules against a single URL and returns the signals
+ * that fired. Returns an empty array for a clean URL.
  */
 export function analyzeUrl(rawUrl: string): RiskSignal[] {
   const signals: RiskSignal[] = []
 
-  // 1) Run rules that work on the raw string first.
   for (const rule of RAW_STRING_RULES) {
     const signal = rule(rawUrl)
     if (signal) signals.push(signal)
   }
 
-  // 2) Parse the URL safely and run object-based rules.
   let parsed: URL
   try {
     parsed = new URL(rawUrl)
   } catch {
-    // A URL we cannot even parse is inherently suspicious. We stop here
-    // because the object-based rules cannot run without a valid URL.
-    return signals
+    return signals // Unparseable URL: return what the string rules found.
   }
 
   for (const rule of URL_OBJECT_RULES) {
     const signal = rule(parsed)
+    if (signal) signals.push(signal)
+  }
+
+  return signals
+}
+
+/**
+ * Runs all DOM-based rules against collected page features and returns the
+ * signals that fired.
+ */
+export function analyzeDom(features: PageFeatures): RiskSignal[] {
+  const signals: RiskSignal[] = []
+
+  for (const rule of DOM_RULES) {
+    const signal = rule(features)
     if (signal) signals.push(signal)
   }
 

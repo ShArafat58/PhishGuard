@@ -8,27 +8,24 @@
  * mistakes at compile time.
  */
 
+import type { PageFeatures } from './detection/types'
+
 /**
  * All message "type" identifiers used across the extension.
- * Using a const object (instead of loose strings) gives us autocomplete
- * and prevents typos like 'GET_CURENT_URL'.
  */
 export const MessageType = {
   /** Sent by the popup to ask the background for the active tab's URL. */
   GET_CURRENT_URL: 'GET_CURRENT_URL',
   /** Sent by a content script to announce it has loaded on a page. */
   CONTENT_SCRIPT_LOADED: 'CONTENT_SCRIPT_LOADED',
+  /** Sent by a content script with the collected DOM features of a page. */
+  PAGE_FEATURES: 'PAGE_FEATURES',
 } as const
 
-/**
- * A union of the string literal values above, e.g. 'GET_CURRENT_URL'.
- * `typeof MessageType` is the object's type; the `[keyof ...]` part
- * extracts the value types from it.
- */
 export type MessageType = (typeof MessageType)[keyof typeof MessageType]
 
 /* -------------------------------------------------------------------------- */
-/*  Request messages: sent from one part, expecting the receiver to act.       */
+/*  Request messages.                                                          */
 /* -------------------------------------------------------------------------- */
 
 /** Popup -> Background: "What is the current tab's URL?" */
@@ -42,17 +39,22 @@ export interface ContentScriptLoadedRequest {
   url: string
 }
 
+/** Content script -> Background: "Here are the DOM features of this page." */
+export interface PageFeaturesRequest {
+  type: typeof MessageType.PAGE_FEATURES
+  features: PageFeatures
+}
+
 /**
  * A discriminated union of every request the background can receive.
- * The shared `type` field is the "discriminant": once TypeScript sees
- * its value, it knows exactly which interface it is dealing with.
  */
 export type ExtensionMessage =
   | GetCurrentUrlRequest
   | ContentScriptLoadedRequest
+  | PageFeaturesRequest
 
 /* -------------------------------------------------------------------------- */
-/*  Response messages: sent back by the background as a reply.                  */
+/*  Response messages.                                                         */
 /* -------------------------------------------------------------------------- */
 
 /** Background -> Popup: the answer to GET_CURRENT_URL. */

