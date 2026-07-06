@@ -1,0 +1,20 @@
+# Normalize line endings across all platforms.
+# Git will store text files with LF internally and check them out with the
+# platform's native line ending, so Windows (CRLF) and Unix/Mac (LF)
+# contributors no longer produce noisy "whole file changed" diffs.
+* text=auto eol=lf
+
+# Explicitly treat these as text (LF).
+*.ts   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.md   text eol=lf
+
+# Treat these as binary so Git never tries to alter them.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
