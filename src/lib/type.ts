@@ -4,28 +4,29 @@
  * The three parts of the extension (popup, background service worker, and
  * content script) cannot read each other's variables directly. They only
  * communicate by passing messages. This file defines the exact shape of
- * every message so that all parts stay in sync and TypeScript can catch
- * mistakes at compile time.
+ * every message so all parts stay in sync and TypeScript catches mistakes.
  */
 
-import type { PageFeatures } from './detection/types'
+import type { PageFeatures, UrlAnalysisResult } from './detection'
 
-/**
- * All message "type" identifiers used across the extension.
- */
+/** All message "type" identifiers used across the extension. */
 export const MessageType = {
-  /** Sent by the popup to ask the background for the active tab's URL. */
+  /** Popup -> Background: ask for the active tab's URL. */
   GET_CURRENT_URL: 'GET_CURRENT_URL',
-  /** Sent by a content script to announce it has loaded on a page. */
+  /** Content script -> Background: announce it loaded on a page. */
   CONTENT_SCRIPT_LOADED: 'CONTENT_SCRIPT_LOADED',
-  /** Sent by a content script with the collected DOM features of a page. */
+  /** Content script -> Background: the collected DOM features of a page. */
   PAGE_FEATURES: 'PAGE_FEATURES',
+  /** Popup -> Background: ask for the current tab's analysis result. */
+  GET_TAB_RESULT: 'GET_TAB_RESULT',
+  /** Background -> Content script: show an on-page danger warning. */
+  SHOW_WARNING: 'SHOW_WARNING',
 } as const
 
 export type MessageType = (typeof MessageType)[keyof typeof MessageType]
 
 /* -------------------------------------------------------------------------- */
-/*  Request messages.                                                          */
+/*  Request messages (received by the background).                             */
 /* -------------------------------------------------------------------------- */
 
 /** Popup -> Background: "What is the current tab's URL?" */
@@ -45,13 +46,31 @@ export interface PageFeaturesRequest {
   features: PageFeatures
 }
 
-/**
- * A discriminated union of every request the background can receive.
- */
+/** Popup -> Background: "Give me the current tab's analysis result." */
+export interface GetTabResultRequest {
+  type: typeof MessageType.GET_TAB_RESULT
+}
+
+/** A discriminated union of every request the background can receive. */
 export type ExtensionMessage =
   | GetCurrentUrlRequest
   | ContentScriptLoadedRequest
   | PageFeaturesRequest
+  | GetTabResultRequest
+
+/* -------------------------------------------------------------------------- */
+/*  Messages sent TO the content script.                                       */
+/* -------------------------------------------------------------------------- */
+
+/** Background -> Content script: "Show a danger warning banner." */
+export interface ShowWarningRequest {
+  type: typeof MessageType.SHOW_WARNING
+  /** A short reason to display, derived from the top signal. */
+  reason: string
+}
+
+/** A union of every message the content script can receive. */
+export type ContentMessage = ShowWarningRequest
 
 /* -------------------------------------------------------------------------- */
 /*  Response messages.                                                         */
@@ -59,6 +78,10 @@ export type ExtensionMessage =
 
 /** Background -> Popup: the answer to GET_CURRENT_URL. */
 export interface GetCurrentUrlResponse {
-  /** The active tab's URL, or null if it could not be determined. */
   url: string | null
+}
+
+/** Background -> Popup: the answer to GET_TAB_RESULT. */
+export interface GetTabResultResponse {
+  result: UrlAnalysisResult | null
 }

@@ -1,44 +1,105 @@
 :root {
   font-family: system-ui, -apple-system, sans-serif;
+  --pg-safe: #16a34a;
+  --pg-suspicious: #d97706;
+  --pg-dangerous: #dc2626;
+  --pg-muted: #6b7280;
+  --pg-text: #111827;
 }
 
 .pg-popup {
-  width: 260px;
-  padding: 16px;
-  text-align: center;
+  width: 300px;
+  padding: 14px;
+  color: var(--pg-text);
+}
+
+.pg-header {
+  margin-bottom: 10px;
 }
 
 .pg-title {
-  margin: 0 0 8px;
-  font-size: 18px;
-}
-
-.pg-status {
   margin: 0;
-  font-size: 13px;
-  color: #16a34a;
+  font-size: 17px;
 }
 
-.pg-current-site {
-  margin-top: 12px;
-  padding: 10px;
+/* Verdict badge — colour comes from data-level. */
+.pg-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
   border-radius: 8px;
-  background: #f3f4f6;
-  text-align: left;
+  color: #fff;
+  background: var(--pg-muted);
 }
 
-.pg-label {
+.pg-verdict[data-level='SAFE'] {
+  background: var(--pg-safe);
+}
+.pg-verdict[data-level='SUSPICIOUS'] {
+  background: var(--pg-suspicious);
+}
+.pg-verdict[data-level='DANGEROUS'] {
+  background: var(--pg-dangerous);
+}
+
+.pg-verdict-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pg-verdict-score {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.pg-site {
+  margin-top: 12px;
+}
+
+.pg-site-caption,
+.pg-signals-caption {
   display: block;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #6b7280;
+  color: var(--pg-muted);
   margin-bottom: 4px;
 }
 
-.pg-url {
+.pg-site-url {
   display: block;
   font-size: 12px;
   word-break: break-all;
-  color: #111827;
+}
+
+.pg-signals {
+  margin-top: 12px;
+}
+
+.pg-signal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pg-signal {
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  border-left: 3px solid var(--pg-muted);
+}
+
+.pg-signal[data-severity='LOW'] {
+  border-left-color: var(--pg-suspicious);
+}
+.pg-signal[data-severity='MEDIUM'] {
+  border-left-color: var(--pg-suspicious);
+}
+.pg-signal[data-severity='HIGH'] {
+  border-left-color: var(--pg-dangerous);
 }

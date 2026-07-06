@@ -8,12 +8,26 @@
   </head>
   <body>
     <main class="pg-popup">
-      <h1 class="pg-title">🛡️ PhishGuard</h1>
-      <p class="pg-status">Extension active</p>
+      <header class="pg-header">
+        <h1 class="pg-title">🛡️ PhishGuard</h1>
+      </header>
 
-      <section class="pg-current-site">
-        <span class="pg-label">Current site</span>
-        <span id="pg-url" class="pg-url">Checking…</span>
+      <!-- Risk verdict badge; class + text are set by popup.ts. -->
+      <section class="pg-verdict" id="pg-verdict" data-level="loading">
+        <span class="pg-verdict-label" id="pg-verdict-label">Analyzing…</span>
+        <span class="pg-verdict-score" id="pg-verdict-score"></span>
+      </section>
+
+      <!-- Current site URL. -->
+      <section class="pg-site">
+        <span class="pg-site-caption">Current site</span>
+        <span class="pg-site-url" id="pg-site-url">…</span>
+      </section>
+
+      <!-- List of detected signals (filled by popup.ts). -->
+      <section class="pg-signals">
+        <span class="pg-signals-caption" id="pg-signals-caption"></span>
+        <ul class="pg-signal-list" id="pg-signal-list"></ul>
       </section>
     </main>
     <script type="module" src="./popup.ts"></script>
