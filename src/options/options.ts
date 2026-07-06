@@ -9,11 +9,7 @@
  * innerHTML) so a stored value can never inject markup into this page.
  */
 
-import {
-  getSettings,
-  setEnabled,
-  removeFromWhitelist,
-} from '../lib/settings'
+import { getSettings, setEnabled, removeFromWhitelist } from '../lib/settings'
 
 /** Renders the whitelist entries, each with a Remove button. */
 function renderWhitelist(hosts: string[]): void {
@@ -58,7 +54,9 @@ async function init(): Promise<void> {
   const settings = await getSettings()
 
   // Master switch.
-  const toggle = document.getElementById('pg-enabled') as HTMLInputElement | null
+  const toggle = document.getElementById(
+    'pg-enabled',
+  ) as HTMLInputElement | null
   if (toggle) {
     toggle.checked = settings.enabled
     toggle.addEventListener('change', () => {

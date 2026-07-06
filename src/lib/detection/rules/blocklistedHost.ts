@@ -24,7 +24,6 @@ export function checkBlocklistedHost(rawUrl: string): RiskSignal | null {
     severity: Severity.HIGH,
     // High enough that a match on its own crosses the DANGEROUS threshold.
     score: 60,
-    description:
-      'This site is on a known-phishing blocklist.',
+    description: 'This site is on a known-phishing blocklist.',
   }
 }

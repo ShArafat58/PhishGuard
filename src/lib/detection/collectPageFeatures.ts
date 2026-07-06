@@ -22,10 +22,7 @@ import type { PageFeatures } from './types'
  * A form with no action submits to the current page, so we treat an empty
  * action as "same host" by returning the page's own hostname.
  */
-function resolveFormActionHost(
-  action: string,
-  baseUrl: string,
-): string | null {
+function resolveFormActionHost(action: string, baseUrl: string): string | null {
   try {
     // The second argument makes relative actions resolve against the page.
     const resolved = new URL(action || baseUrl, baseUrl)

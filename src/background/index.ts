@@ -2,9 +2,9 @@
  * PhishGuard — Background Service Worker ("the brain").
  *
  * Applies user settings (master switch + whitelist), analyses page
- * features, stores each tab's result, keeps the badge in sync, warns the
- * user on dangerous pages, toggles whitelist entries, and answers the
- * popup's requests.
+ * features (after sanitising them), stores each tab's result, keeps the
+ * badge in sync, warns the user on dangerous pages, toggles whitelist
+ * entries, and answers the popup's requests.
  *
  * MV3 note: the service worker is event-driven and may restart at any
  * time, so per-tab state lives in chrome.storage.session (tabState.ts) and
@@ -25,6 +25,7 @@ import {
   type UrlAnalysisResult,
   type RiskSignal,
 } from '../lib/detection'
+import { sanitizeFeatures } from '../lib/detection/validateFeatures'
 import { saveTabResult, getTabResult, clearTabResult } from '../lib/tabState'
 import { updateBadge, clearBadge } from '../lib/badge'
 import {
@@ -80,22 +81,26 @@ function hostOf(rawUrl: string): string | null {
 /**
  * Analyses a page's features — subject to the user's settings — then
  * stores the result, updates the badge, and warns on dangerous pages.
+ * Incoming features are sanitised first, since they originate from a
+ * potentially hostile page.
  */
 async function handlePageFeatures(
   message: Extract<ExtensionMessage, { type: 'PAGE_FEATURES' }>,
   tabId: number | undefined,
 ): Promise<void> {
-  const features = message.features
+  const features = sanitizeFeatures(message.features)
   const settings = await getSettings()
 
   if (typeof tabId !== 'number') return
 
+  // 1) Master switch off: do nothing, keep the badge clear.
   if (!settings.enabled) {
     await clearTabResult(tabId)
     await clearBadge(tabId)
     return
   }
 
+  // 2) Whitelisted host: treat as SAFE, no analysis, no warning.
   const host = hostOf(features.pageUrl)
   if (host && (await isWhitelisted(host))) {
     const result = safeResult(features.pageUrl)
@@ -105,6 +110,7 @@ async function handlePageFeatures(
     return
   }
 
+  // 3) Normal path: run the full analysis.
   const result = analyzePage(features)
 
   console.log(
@@ -142,7 +148,7 @@ async function handleGetTabResult(
 
 /**
  * Toggles a host in the whitelist. If it was trusted, it becomes untrusted
- * and vice-versa. Re-syncs the badge for the active tab afterwards.
+ * and vice-versa. Re-syncs the active tab afterwards so the change applies.
  */
 async function handleToggleWhitelist(
   host: string,
@@ -156,7 +162,6 @@ async function handleToggleWhitelist(
     await addToWhitelist(host)
   }
 
-  // Re-analyse or re-sync the active tab so the change takes effect now.
   const tab = await getActiveTab()
   if (typeof tab?.id === 'number') {
     if (!currentlyWhitelisted) {
@@ -175,8 +180,12 @@ async function handleToggleWhitelist(
 
 chrome.runtime.onMessage.addListener(
   (message: ExtensionMessage, sender, sendResponse) => {
+    // Only trust messages from our own extension.
     if (sender.id !== chrome.runtime.id) {
-      console.warn('[PhishGuard] Ignored message from unknown sender:', sender.id)
+      console.warn(
+        '[PhishGuard] Ignored message from unknown sender:',
+        sender.id,
+      )
       return false
     }
 
@@ -218,6 +227,10 @@ chrome.runtime.onMessage.addListener(
     }
   },
 )
+
+/* -------------------------------------------------------------------------- */
+/*  Tab lifecycle: keep the badge in sync with the active tab.                 */
+/* -------------------------------------------------------------------------- */
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   void syncBadgeForTab(activeInfo.tabId)

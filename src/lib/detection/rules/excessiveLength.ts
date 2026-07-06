@@ -20,6 +20,7 @@ export function checkExcessiveLength(rawUrl: string): RiskSignal | null {
     id: SignalId.EXCESSIVE_LENGTH,
     severity: Severity.LOW,
     score: 10,
-    description: 'The URL is unusually long, which can be used to hide its true destination.',
+    description:
+      'The URL is unusually long, which can be used to hide its true destination.',
   }
 }

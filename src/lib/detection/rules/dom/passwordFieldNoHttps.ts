@@ -17,7 +17,7 @@ export function checkPasswordFieldNoHttps(
     return null
   }
 
-  let isHttps = false
+  let isHttps: boolean
   try {
     isHttps = new URL(features.pageUrl).protocol === 'https:'
   } catch {

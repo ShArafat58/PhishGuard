@@ -1,5 +1,8 @@
 :root {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   --pg-safe: #16a34a;
   --pg-danger: #dc2626;
   --pg-muted: #6b7280;

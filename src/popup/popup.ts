@@ -86,7 +86,9 @@ function renderSignals(result: UrlAnalysisResult | null): void {
 
 /** Updates the trust button's label and state for the given host. */
 async function renderTrustButton(host: string | null): Promise<void> {
-  const btn = document.getElementById('pg-trust-btn') as HTMLButtonElement | null
+  const btn = document.getElementById(
+    'pg-trust-btn',
+  ) as HTMLButtonElement | null
   if (!btn) return
 
   if (!host) {
@@ -104,7 +106,9 @@ async function renderTrustButton(host: string | null): Promise<void> {
 async function onTrustClick(): Promise<void> {
   if (!currentHost) return
 
-  const btn = document.getElementById('pg-trust-btn') as HTMLButtonElement | null
+  const btn = document.getElementById(
+    'pg-trust-btn',
+  ) as HTMLButtonElement | null
   const wasTrusted = btn?.dataset.trusted === 'true'
 
   // Ask for confirmation only when TRUSTING (the risky direction).
@@ -125,24 +129,20 @@ async function onTrustClick(): Promise<void> {
   // Reflect the new state, and refresh the verdict view.
   await renderTrustButton(currentHost)
   if (response.whitelisted) {
-    renderVerdict({
+    const safe: UrlAnalysisResult = {
       url: currentHost,
       totalScore: 0,
       level: RiskLevel.SAFE,
       signals: [],
-    })
-    renderSignals({
-      url: currentHost,
-      totalScore: 0,
-      level: RiskLevel.SAFE,
-      signals: [],
-    })
+    }
+    renderVerdict(safe)
+    renderSignals(safe)
   }
 }
 
 /** Loads everything and wires up the UI. */
 async function init(): Promise<void> {
-  let url: string | null = null
+  let url: string | null
   try {
     const urlResponse: GetCurrentUrlResponse = await chrome.runtime.sendMessage(
       { type: MessageType.GET_CURRENT_URL },

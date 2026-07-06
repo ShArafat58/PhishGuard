@@ -31,7 +31,10 @@ function makeFeatures(overrides: Partial<PageFeatures> = {}): PageFeatures {
 describe('checkPasswordFieldNoHttps', () => {
   it('fires when a password field is on an http page', () => {
     const signal = checkPasswordFieldNoHttps(
-      makeFeatures({ pageUrl: 'http://login.example/', hasPasswordField: true }),
+      makeFeatures({
+        pageUrl: 'http://login.example/',
+        hasPasswordField: true,
+      }),
     )
     expect(signal?.id).toBe('PASSWORD_FIELD_NO_HTTPS')
     expect(signal?.severity).toBe('HIGH')
@@ -39,7 +42,10 @@ describe('checkPasswordFieldNoHttps', () => {
 
   it('does NOT fire when the password field is on an https page', () => {
     const signal = checkPasswordFieldNoHttps(
-      makeFeatures({ pageUrl: 'https://login.example/', hasPasswordField: true }),
+      makeFeatures({
+        pageUrl: 'https://login.example/',
+        hasPasswordField: true,
+      }),
     )
     expect(signal).toBeNull()
   })

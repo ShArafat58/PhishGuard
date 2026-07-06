@@ -19,7 +19,10 @@ import blocklistData from './data/blocklist.json'
  * stored list and the queried host, so they compare fairly.
  */
 export function normalizeHost(host: string): string {
-  return host.trim().toLowerCase().replace(/^www\./, '')
+  return host
+    .trim()
+    .toLowerCase()
+    .replace(/^www\./, '')
 }
 
 /**
