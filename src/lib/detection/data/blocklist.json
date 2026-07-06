@@ -1,0 +1,11 @@
+{
+  "version": "2026-01-01",
+  "source": "PhishGuard local starter list (for development and testing)",
+  "hosts": [
+    "phishing-site.example",
+    "fake-bank-login.example",
+    "secure-account-verify.example",
+    "paypal-security-check.example",
+    "evil-collector.example"
+  ]
+}

@@ -1,9 +1,9 @@
 /**
  * PhishGuard — Detection engine.
  *
- * The "conductor" of detection. It runs URL-based rules against a URL and
- * DOM-based rules against collected page features, and collects the signals
- * that fired.
+ * The "conductor" of detection. It runs URL-based rules and a reputation
+ * (blocklist) rule against a URL, and DOM-based rules against collected
+ * page features, then collects the signals that fired.
  *
  * Adding a new rule = write the rule file, then register it in the right
  * array below. Nothing else changes. (Open/Closed principle.)
@@ -20,6 +20,9 @@ import { checkManySubdomains } from './rules/manySubdomains'
 import { checkSuspiciousTld } from './rules/suspiciousTld'
 import { checkPunycodeHost } from './rules/punycodeHost'
 
+// --- Reputation/blocklist rule (Milestone 6) ---
+import { checkBlocklistedHost } from './rules/blocklistedHost'
+
 // --- DOM-based rules (Milestone 4) ---
 import { checkPasswordFieldNoHttps } from './rules/dom/passwordFieldNoHttps'
 import { checkFormActionMismatch } from './rules/dom/formActionMismatch'
@@ -34,10 +37,11 @@ const URL_OBJECT_RULES: Array<(url: URL) => RiskSignal | null> = [
   checkPunycodeHost,
 ]
 
-/** URL rules that need the raw URL string. */
+/** Rules that need the raw URL string (blocklist + string-based checks). */
 const RAW_STRING_RULES: Array<(rawUrl: string) => RiskSignal | null> = [
   checkAtSymbol,
   checkExcessiveLength,
+  checkBlocklistedHost,
 ]
 
 /** DOM rules that operate on collected page features. */
@@ -48,8 +52,8 @@ const DOM_RULES: Array<(features: PageFeatures) => RiskSignal | null> = [
 ]
 
 /**
- * Runs all URL-based rules against a single URL and returns the signals
- * that fired. Returns an empty array for a clean URL.
+ * Runs all URL-based and reputation rules against a single URL and returns
+ * the signals that fired. Returns an empty array for a clean URL.
  */
 export function analyzeUrl(rawUrl: string): RiskSignal[] {
   const signals: RiskSignal[] = []
