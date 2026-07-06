@@ -1,14 +1,14 @@
 /**
  * PhishGuard — Background Service Worker ("the brain").
  *
- * Listens for messages from the popup and content scripts. It analyses
- * page features, stores each tab's result, keeps the toolbar badge in sync
- * with the active tab, warns the user on dangerous pages, and answers the
+ * Applies user settings (master switch + whitelist), analyses page
+ * features, stores each tab's result, keeps the badge in sync, warns the
+ * user on dangerous pages, toggles whitelist entries, and answers the
  * popup's requests.
  *
  * MV3 note: the service worker is event-driven and may restart at any
- * time, so per-tab state lives in chrome.storage.session (see tabState.ts),
- * and the badge is re-synced from that state on tab activation.
+ * time, so per-tab state lives in chrome.storage.session (tabState.ts) and
+ * user settings live in chrome.storage.local (settings.ts).
  */
 
 import {
@@ -16,12 +16,23 @@ import {
   type ExtensionMessage,
   type GetCurrentUrlResponse,
   type GetTabResultResponse,
+  type ToggleWhitelistResponse,
   type ShowWarningRequest,
 } from '../lib/type'
 import { analyzePage } from '../lib/detection'
-import { RiskLevel, type UrlAnalysisResult } from '../lib/detection'
+import {
+  RiskLevel,
+  type UrlAnalysisResult,
+  type RiskSignal,
+} from '../lib/detection'
 import { saveTabResult, getTabResult, clearTabResult } from '../lib/tabState'
 import { updateBadge, clearBadge } from '../lib/badge'
+import {
+  getSettings,
+  isWhitelisted,
+  addToWhitelist,
+  removeFromWhitelist,
+} from '../lib/settings'
 
 console.log('[PhishGuard] Service worker started')
 
@@ -41,12 +52,7 @@ function topReason(result: UrlAnalysisResult): string {
   return top.description
 }
 
-/**
- * Re-draws the badge for a tab from its stored result. If there is no
- * stored result (e.g. a fresh tab or an internal page), clears the badge.
- * This keeps the badge correct across tab switches and service-worker
- * restarts.
- */
+/** Re-draws the badge for a tab from its stored result, or clears it. */
 async function syncBadgeForTab(tabId: number): Promise<void> {
   const result = await getTabResult(tabId)
   if (result) {
@@ -56,23 +62,56 @@ async function syncBadgeForTab(tabId: number): Promise<void> {
   }
 }
 
+/** Builds a "clean" SAFE result (used for whitelisted pages). */
+function safeResult(url: string): UrlAnalysisResult {
+  const noSignals: RiskSignal[] = []
+  return { url, totalScore: 0, level: RiskLevel.SAFE, signals: noSignals }
+}
+
+/** Extracts a hostname from a URL, or null if it cannot be parsed. */
+function hostOf(rawUrl: string): string | null {
+  try {
+    return new URL(rawUrl).hostname
+  } catch {
+    return null
+  }
+}
+
 /**
- * Analyses a page's features, stores the result, updates the badge, and
- * — if the page is dangerous — asks the content script to warn the user.
+ * Analyses a page's features — subject to the user's settings — then
+ * stores the result, updates the badge, and warns on dangerous pages.
  */
 async function handlePageFeatures(
   message: Extract<ExtensionMessage, { type: 'PAGE_FEATURES' }>,
   tabId: number | undefined,
 ): Promise<void> {
-  const result = analyzePage(message.features)
+  const features = message.features
+  const settings = await getSettings()
+
+  if (typeof tabId !== 'number') return
+
+  if (!settings.enabled) {
+    await clearTabResult(tabId)
+    await clearBadge(tabId)
+    return
+  }
+
+  const host = hostOf(features.pageUrl)
+  if (host && (await isWhitelisted(host))) {
+    const result = safeResult(features.pageUrl)
+    await saveTabResult(tabId, result)
+    await clearBadge(tabId)
+    console.log(`[PhishGuard] ${features.pageUrl} is whitelisted — skipped.`)
+    return
+  }
+
+  const result = analyzePage(features)
 
   console.log(
     `[PhishGuard] Analysis for ${result.url}: ${result.level} ` +
       `(score ${result.totalScore})`,
     result.signals,
   )
-
-  if (typeof tabId !== 'number') return
 
   await saveTabResult(tabId, result)
   await updateBadge(tabId, result)
@@ -101,9 +140,41 @@ async function handleGetTabResult(
   sendResponse({ result })
 }
 
+/**
+ * Toggles a host in the whitelist. If it was trusted, it becomes untrusted
+ * and vice-versa. Re-syncs the badge for the active tab afterwards.
+ */
+async function handleToggleWhitelist(
+  host: string,
+  sendResponse: (response: ToggleWhitelistResponse) => void,
+): Promise<void> {
+  const currentlyWhitelisted = await isWhitelisted(host)
+
+  if (currentlyWhitelisted) {
+    await removeFromWhitelist(host)
+  } else {
+    await addToWhitelist(host)
+  }
+
+  // Re-analyse or re-sync the active tab so the change takes effect now.
+  const tab = await getActiveTab()
+  if (typeof tab?.id === 'number') {
+    if (!currentlyWhitelisted) {
+      // Just trusted → mark SAFE immediately.
+      await saveTabResult(tab.id, safeResult(tab.url ?? host))
+      await clearBadge(tab.id)
+    } else {
+      // Just untrusted → clear so the next page load re-analyses.
+      await clearTabResult(tab.id)
+      await clearBadge(tab.id)
+    }
+  }
+
+  sendResponse({ whitelisted: !currentlyWhitelisted })
+}
+
 chrome.runtime.onMessage.addListener(
   (message: ExtensionMessage, sender, sendResponse) => {
-    // Only trust messages from our own extension.
     if (sender.id !== chrome.runtime.id) {
       console.warn('[PhishGuard] Ignored message from unknown sender:', sender.id)
       return false
@@ -120,6 +191,11 @@ chrome.runtime.onMessage.addListener(
 
       case MessageType.GET_TAB_RESULT: {
         void handleGetTabResult(sendResponse)
+        return true
+      }
+
+      case MessageType.TOGGLE_WHITELIST: {
+        void handleToggleWhitelist(message.host, sendResponse)
         return true
       }
 
@@ -143,19 +219,10 @@ chrome.runtime.onMessage.addListener(
   },
 )
 
-/* -------------------------------------------------------------------------- */
-/*  Tab lifecycle: keep the badge in sync with the active tab.                 */
-/* -------------------------------------------------------------------------- */
-
-// When the user switches to another tab, re-draw the badge from that tab's
-// stored result (or clear it if we have none).
 chrome.tabs.onActivated.addListener((activeInfo) => {
   void syncBadgeForTab(activeInfo.tabId)
 })
 
-// When a tab navigates to a new URL, its old result is stale. Clear it so
-// we do not show a previous page's verdict; the content script will report
-// fresh features for the new page.
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.url) {
     void clearTabResult(tabId)
@@ -163,7 +230,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   }
 })
 
-// Clean up stored state when a tab is closed.
 chrome.tabs.onRemoved.addListener((tabId) => {
   void clearTabResult(tabId)
 })

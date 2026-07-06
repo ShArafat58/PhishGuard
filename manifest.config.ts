@@ -9,18 +9,15 @@ export default defineManifest({
   description:
     'Detects and warns about phishing websites in real time using URL heuristics and page analysis.',
 
-  // The popup shown when the user clicks the toolbar icon.
   action: {
     default_popup: 'src/popup/popup.html',
   },
 
-  // The service worker: our extension's central "brain".
   background: {
     service_worker: 'src/background/index.ts',
     type: 'module',
   },
 
-  // Scripts injected into every web page the user visits.
   content_scripts: [
     {
       matches: ['<all_urls>'],
@@ -28,6 +25,12 @@ export default defineManifest({
       run_at: 'document_idle',
     },
   ],
+
+  // A full settings page for managing the whitelist and master switch.
+  options_ui: {
+    page: 'src/options/options.html',
+    open_in_tab: true,
+  },
 
   // Principle of least privilege: request only what we truly need.
   permissions: ['activeTab', 'storage'],

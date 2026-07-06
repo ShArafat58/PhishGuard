@@ -19,6 +19,8 @@ export const MessageType = {
   PAGE_FEATURES: 'PAGE_FEATURES',
   /** Popup -> Background: ask for the current tab's analysis result. */
   GET_TAB_RESULT: 'GET_TAB_RESULT',
+  /** Popup -> Background: add/remove the current host from the whitelist. */
+  TOGGLE_WHITELIST: 'TOGGLE_WHITELIST',
   /** Background -> Content script: show an on-page danger warning. */
   SHOW_WARNING: 'SHOW_WARNING',
 } as const
@@ -51,12 +53,19 @@ export interface GetTabResultRequest {
   type: typeof MessageType.GET_TAB_RESULT
 }
 
+/** Popup -> Background: "Toggle whitelist status for this host." */
+export interface ToggleWhitelistRequest {
+  type: typeof MessageType.TOGGLE_WHITELIST
+  host: string
+}
+
 /** A discriminated union of every request the background can receive. */
 export type ExtensionMessage =
   | GetCurrentUrlRequest
   | ContentScriptLoadedRequest
   | PageFeaturesRequest
   | GetTabResultRequest
+  | ToggleWhitelistRequest
 
 /* -------------------------------------------------------------------------- */
 /*  Messages sent TO the content script.                                       */
@@ -65,7 +74,6 @@ export type ExtensionMessage =
 /** Background -> Content script: "Show a danger warning banner." */
 export interface ShowWarningRequest {
   type: typeof MessageType.SHOW_WARNING
-  /** A short reason to display, derived from the top signal. */
   reason: string
 }
 
@@ -84,4 +92,10 @@ export interface GetCurrentUrlResponse {
 /** Background -> Popup: the answer to GET_TAB_RESULT. */
 export interface GetTabResultResponse {
   result: UrlAnalysisResult | null
+}
+
+/** Background -> Popup: the answer to TOGGLE_WHITELIST. */
+export interface ToggleWhitelistResponse {
+  /** True if the host is now whitelisted, false if it was removed. */
+  whitelisted: boolean
 }

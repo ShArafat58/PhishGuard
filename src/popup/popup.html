@@ -12,22 +12,26 @@
         <h1 class="pg-title">🛡️ PhishGuard</h1>
       </header>
 
-      <!-- Risk verdict badge; class + text are set by popup.ts. -->
       <section class="pg-verdict" id="pg-verdict" data-level="loading">
         <span class="pg-verdict-label" id="pg-verdict-label">Analyzing…</span>
         <span class="pg-verdict-score" id="pg-verdict-score"></span>
       </section>
 
-      <!-- Current site URL. -->
       <section class="pg-site">
         <span class="pg-site-caption">Current site</span>
         <span class="pg-site-url" id="pg-site-url">…</span>
       </section>
 
-      <!-- List of detected signals (filled by popup.ts). -->
       <section class="pg-signals">
         <span class="pg-signals-caption" id="pg-signals-caption"></span>
         <ul class="pg-signal-list" id="pg-signal-list"></ul>
+      </section>
+
+      <!-- Whitelist control. Hidden until we know the host. -->
+      <section class="pg-actions">
+        <button class="pg-trust-btn" id="pg-trust-btn" hidden>
+          Trust this site
+        </button>
       </section>
     </main>
     <script type="module" src="./popup.ts"></script>

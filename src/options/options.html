@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PhishGuard Settings</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main class="pg-options">
+      <header class="pg-head">
+        <h1>🛡️ PhishGuard Settings</h1>
+        <p class="pg-sub">Control protection and manage trusted sites.</p>
+      </header>
+
+      <!-- Master switch -->
+      <section class="pg-card">
+        <div class="pg-row">
+          <div>
+            <h2 class="pg-card-title">Protection</h2>
+            <p class="pg-card-desc">
+              When off, PhishGuard stops analysing pages and showing warnings.
+            </p>
+          </div>
+          <label class="pg-switch">
+            <input type="checkbox" id="pg-enabled" />
+            <span class="pg-slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Whitelist -->
+      <section class="pg-card">
+        <h2 class="pg-card-title">Trusted sites</h2>
+        <p class="pg-card-desc">
+          PhishGuard never warns you about these sites. Remove a site to resume
+          protection for it.
+        </p>
+        <ul class="pg-whitelist" id="pg-whitelist"></ul>
+        <p class="pg-empty" id="pg-empty" hidden>
+          You haven't trusted any sites yet.
+        </p>
+      </section>
+    </main>
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>

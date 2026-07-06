@@ -22,7 +22,6 @@
   font-size: 17px;
 }
 
-/* Verdict badge — colour comes from data-level. */
 .pg-verdict {
   display: flex;
   flex-direction: column;
@@ -102,4 +101,29 @@
 }
 .pg-signal[data-severity='HIGH'] {
   border-left-color: var(--pg-dangerous);
+}
+
+.pg-actions {
+  margin-top: 14px;
+}
+
+.pg-trust-btn {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--pg-muted);
+  background: #fff;
+  color: var(--pg-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pg-trust-btn:hover {
+  background: #f3f4f6;
+}
+
+.pg-trust-btn[data-trusted='true'] {
+  border-color: var(--pg-safe);
+  color: var(--pg-safe);
 }
