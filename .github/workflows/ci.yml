@@ -1,0 +1,51 @@
+# PhishGuard — Continuous Integration
+#
+# Runs type-checking, linting, tests, and a production build on every push
+# and pull request to the main branch. This guarantees that broken code
+# cannot land unnoticed.
+
+name: CI
+
+# When to run this workflow.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Get the repository's code onto the runner.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Install a specific Node.js version, with npm caching for speed.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 3) Install dependencies exactly as locked (reproducible).
+      - name: Install dependencies
+        run: npm ci
+
+      # 4) Type-check: fail the build on any TypeScript error.
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # 5) Lint: enforce code-quality rules.
+      - name: Lint
+        run: npm run lint
+
+      # 6) Run the full test suite once.
+      - name: Run tests
+        run: npx vitest run
+
+      # 7) Production build: make sure the extension actually builds.
+      - name: Build
+        run: npm run build

@@ -1,4 +1,5 @@
 # 🛡️ PhishGuard
+![CI](https://github.com/ShArafat58/PhishGuard/actions/workflows/ci.yml/badge.svg)
 
 **A real-time phishing detection browser extension built with TypeScript and Manifest V3.**
 
