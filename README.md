@@ -149,7 +149,14 @@ PhishGuard is one layer of defence, not a guarantee:
 - [ ] CI/CD with GitHub Actions
 - [ ] `MutationObserver` for single-page-app navigation
 
-## License
+
+## Installation (for users — no build needed)
+
+1. Download the latest `phishguard.zip` from the [Releases page](https://github.com/ShArafat58/PhishGuard/releases).
+2. Unzip it to a folder.
+3. Open `chrome://extensions`, turn on **Developer mode** (top-right).
+4. Click **Load unpacked** and select the unzipped folder.
+5. PhishGuard is now active — browse normally and it will warn you about suspicious sites.
 
 Released under the [MIT License](LICENSE).
 
